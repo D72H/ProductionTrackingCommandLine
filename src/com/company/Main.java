@@ -1,6 +1,7 @@
 package com.company;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -12,22 +13,122 @@ public class Main {
         ArrayList<ProcessingData>  processingData = new ArrayList<>();
         ArrayList<ShippingData> shippingData = new ArrayList<>();
 
-        System.out.println("What do you want.");
+
 
         Scanner commandLine = new Scanner(System.in);
 
-        while(!commandLine.nextLine().toLowerCase().equals("exit")) {
-            System.out.println("What do you want");
 
-            if(commandLine.nextLine().equals("read")){
-                readProcessingReports(new File("C:" +File.separator +"Sync"+File.separator+"TTW-Shared"+File.separator+"Employees"+File.separator+"Matthew"+File.separator+"MSBShips"+File.separator+"ProcessingReports"), processingData);
-                readShippingReports(new File("C:" +File.separator +"Sync"+File.separator+"TTW-Shared"+File.separator+"Employees"+File.separator+"Matthew"+File.separator+"MSBShips"+File.separator+"ShippingReports"), shippingData);
-                processingData.forEach((n -> System.out.println(n.toString())));
-                shippingData.forEach((n -> System.out.println(n.toString())));
-            }
+        System.out.println("What do you want");
 
+        if(commandLine.nextLine().equals("read")){
+            readProcessingReports(new File("C:" +File.separator +"Sync"+File.separator+"TTW-Shared"+File.separator+"Employees"+File.separator+"Matthew"+File.separator+"MSBShips"+File.separator+"ProcessingReports"), processingData);
+            readShippingReports(new File("C:" +File.separator +"Sync"+File.separator+"TTW-Shared"+File.separator+"Employees"+File.separator+"Matthew"+File.separator+"MSBShips"+File.separator+"ShippingReports"), shippingData);
+            processingData.forEach((n -> System.out.println(n.toString())));
+            shippingData.forEach((n -> System.out.println(n.toString())));
+
+            System.out.println("\n");
+            combineShippingDataByDate(shippingData).forEach((n -> System.out.println(n.toString())));
+            System.out.println("\n");
+            combineProcessingDataByDate(processingData).forEach((n -> System.out.println(n.toString())));
+            //combineProcessingByDateAndName();
+
+            printProcessingProductionData(combineProcessingDataByDate(processingData));
+            printShippingProductionData(combineShippingDataByDate(shippingData));
         }
+
+
+
     }
+
+    private static ArrayList<ProcessingData> combineProcessingDataByDate(ArrayList<ProcessingData> processingData) {
+        ArrayList<ProcessingData> list = new ArrayList<>();
+
+        for (ProcessingData shippingDatum : processingData) {
+            Boolean added = false;
+            if (list.isEmpty()) {
+                list.add(shippingDatum);
+            } else{
+                for (ProcessingData data : list) {
+                    if (data.getDate().equals(shippingDatum.getDate())) {
+                        data.setUnitsProcessed(data.getUnitsProcessed() + shippingDatum.getUnitsProcessed());
+                        added = true;
+                        break;
+                    }
+                }
+                if(!added)
+                    list.add(shippingDatum);
+            }
+        }
+        return list;
+    }
+
+    private static void combineProcessingByDateAndName() {
+    }
+
+    private static ArrayList<ShippingData> combineShippingDataByDate(ArrayList<ShippingData> shippingData) {
+        ArrayList<ShippingData> list = new ArrayList<>();
+
+        for (ShippingData shippingDatum : shippingData) {
+            Boolean added = false;
+            if (list.isEmpty()) {
+                list.add(shippingDatum);
+            } else{
+                for (ShippingData data : list) {
+                    if (data.getDate().equals(shippingDatum.getDate())) {
+                        data.setUnitsShipped(data.getUnitsShipped() + shippingDatum.getUnitsShipped());
+                        added = true;
+                        break;
+                    }
+                }
+                if(!added)
+                list.add(shippingDatum);
+            }
+        }
+        return list;
+    }
+
+    private static void printShippingProductionData(ArrayList<ShippingData> list) throws IOException {
+        String objectPath = "C:" +File.separator +"Sync"+File.separator+"TTW-Shared"+File.separator+"Employees"+File.separator+"Matthew"+File.separator+"MSBShips"+File.separator+"data";
+
+        File customDir = new File(objectPath);
+
+        if (customDir.exists()) {
+            System.out.println(customDir + " already exists");
+        } else if (customDir.mkdirs()) {
+            System.out.println(customDir + " was created");
+        } else {
+            System.out.println(customDir + " was not created");
+        }
+
+        Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(objectPath + File.separator + "ShippingProductionData.tsv")));
+        StringBuilder shippingProductionData = new StringBuilder();
+        list.forEach((n -> shippingProductionData.append(n.toString() + "\n")));
+        writer.write(shippingProductionData.toString());
+        writer.close();
+
+    }
+
+    private static void printProcessingProductionData(ArrayList<ProcessingData> list) throws IOException {
+        String objectPath = "C:" +File.separator +"Sync"+File.separator+"TTW-Shared"+File.separator+"Employees"+File.separator+"Matthew"+File.separator+"MSBShips"+File.separator+"data";
+
+        File customDir = new File(objectPath);
+
+        if (customDir.exists()) {
+            System.out.println(customDir + " already exists");
+        } else if (customDir.mkdirs()) {
+            System.out.println(customDir + " was created");
+        } else {
+            System.out.println(customDir + " was not created");
+        }
+
+        Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(objectPath + File.separator + "ProcessingProductionData.tsv")));
+        StringBuilder processingProductionData = new StringBuilder();
+        list.forEach((n -> processingProductionData.append(n.toString() + "\n")));
+        writer.write(processingProductionData.toString());
+        writer.close();
+
+    }
+
     //reads the processing reports and calls the method to generate the date, value, initials object.
     public static void readProcessingReports(File file, ArrayList<ProcessingData> processingData) throws IOException {
         //if the directory exists and is not empty make an array of all files in the directory.
@@ -80,7 +181,7 @@ public class Main {
     }
 
     //takes the comma separated string of initials of who processed and approved the item and separates out the supervisor.
-    // FIXME: 9/11/2019 not getting the right column
+
     public static String parseInitials(String rawInitials){
         String[] initials = rawInitials.split(",");
         StringBuilder builder = new StringBuilder();

@@ -27,6 +27,6 @@ public class ShippingData {
         this.unitsShipped = unitsShipped;
     }
     public String toString(){
-        return date + " " + unitsShipped;
+        return date + "\t" + unitsShipped;
     }
 }

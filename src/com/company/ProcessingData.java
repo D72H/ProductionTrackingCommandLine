@@ -38,6 +38,6 @@ public class ProcessingData {
         this.unitsProcessed = unitsProcessed;
     }
     public String toString(){
-        return initials + " " + date + " " + unitsProcessed;
+        return initials + "\t" + date + "\t" + unitsProcessed;
     }
 }
